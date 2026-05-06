@@ -74,5 +74,23 @@ class BottleManager {
     func deleteBottle(_ bottle: Bottle) {
         try? fileManager.removeItem(at: bottle.path)
     }
-
+    
+    func folderSize(for url: URL) -> Int64 {
+        guard let enumerator = fileManager.enumerator(
+                at: url, includingPropertiesForKeys: [.fileSizeKey, .isRegularFileKey]
+        ) else {
+            return 0
+        }
+        
+        var total: Int64 = 0
+        
+        for case let fileURL as URL in enumerator {
+            let values = try? fileURL.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey])
+            if values?.isRegularFile == true {
+                total += Int64(values?.fileSize ?? 0)
+            }
+        }
+        
+        return total
+    }
 }

@@ -25,7 +25,7 @@ struct ContentView: View {
                                 NSWorkspace.shared.activateFileViewerSelecting([bottle.path])
                             }
                             Button("Get Info") {
-                                infoBottle = bottle
+                                InfoManager.shared.showInfo(for: bottle)
                             }
                             Button("Delete", role: .destructive) {
                             if let index = bottles.firstIndex(of:bottle) {
@@ -79,7 +79,9 @@ struct ContentView: View {
             
             ToolbarItem{
                 Button {
-                    infoBottle = selectedBottle
+                    if let selected = selectedBottle {
+                        InfoManager.shared.showInfo(for: selected)
+                    }
                 } label: {
                     Image(systemName: "info.circle")
                 }
