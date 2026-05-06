@@ -70,5 +70,9 @@ class BottleManager {
         }
                 
     }
+    
+    func deleteBottle(_ bottle: Bottle) {
+        try? fileManager.removeItem(at: bottle.path)
+    }
 
 }

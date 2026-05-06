@@ -6,11 +6,13 @@
 //
 
 import SwiftUI
+import AppKit
 
 struct ContentView: View {
     @State private var bottles: [Bottle] = []
     @State private var selectedBottle: Bottle?
     @State private var createSheet = false
+    @State private var infoBottle: Bottle?
     
     var body: some View {
         NavigationSplitView {
@@ -18,22 +20,70 @@ struct ContentView: View {
                 ForEach(bottles) { bottle in
                     Text(bottle.name)
                         .tag(bottle)
-                }
-            }
-            .toolbar {
-                ToolbarItem(placement: .primaryAction) {
-                    Button(action: {createSheet = true}) {
-                        Image(systemName: "plus")
+                        .contextMenu {
+                            Button("Show in Finder") {
+                                NSWorkspace.shared.activateFileViewerSelecting([bottle.path])
+                            }
+                            Button("Get Info") {
+                                infoBottle = bottle
+                            }
+                            Button("Delete", role: .destructive) {
+                            if let index = bottles.firstIndex(of:bottle) {
+                                deleteBottle(at: IndexSet(integer: index))
+                            }
+                        }
                     }
                 }
+                
             }
+            .onDeleteCommand {
+                if let selected = selectedBottle,
+                   let index = bottles.firstIndex(of: selected) {
+                    deleteBottle(at: IndexSet(integer: index))
+                }
+            }
+            
         } detail: {
-            if let bottle = selectedBottle {
-                BottleView(bottle: bottle)
-            } else {
+            if bottles.isEmpty{
                 EmptyView() {
                     createSheet = true
                 }
+            } else if let bottle = selectedBottle {
+                BottleView(bottle: bottle)
+            } else {
+                Text("Select a bottle")
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .toolbar {
+            ToolbarItem {
+                
+                Button {
+                    createSheet = true
+                } label: {
+                    Image(systemName: "plus")
+                }
+           }
+            
+            ToolbarItem {
+                Button(role: .destructive) {
+                    if let selected = selectedBottle,
+                       let index = bottles.firstIndex(of: selected) {
+                        deleteBottle(at: IndexSet(integer: index))
+                    }
+                } label: {
+                    Image(systemName: "trash")
+                }
+                .disabled(selectedBottle == nil)
+            }
+            
+            ToolbarItem{
+                Button {
+                    infoBottle = selectedBottle
+                } label: {
+                    Image(systemName: "info.circle")
+                }
+                .disabled(selectedBottle == nil)
             }
         }
         .onAppear {
@@ -46,11 +96,25 @@ struct ContentView: View {
                 selectedBottle = bottle
             }
         }
+        .navigationSplitViewColumnWidth(min: 180, ideal: 220, max: 280)
     }
 
     func addBottle() {
         let newBottle = BottleManager.shared.createBottle(name: "New Bottle")
         bottles.append(newBottle)
+    }
+    
+    func deleteBottle(at offsets: IndexSet) {
+        for index in offsets {
+            let bottle = bottles[index]
+            BottleManager.shared.deleteBottle(bottle)
+        }
+        
+        bottles.remove(atOffsets: offsets)
+        
+        if !bottles.contains(where: { $0.id == selectedBottle?.id }) {
+            selectedBottle = bottles.first
+        }
     }
 }
 
